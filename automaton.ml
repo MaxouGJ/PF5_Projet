@@ -44,18 +44,22 @@ let readGeneration f n =
   g;
 ;;
 
-(*Converti en règle le string r*)
-let listRule r =
-  let rec readR r l =
-    if String.length r = 0 then l
-    else let str = String.sub r 0 1 in
-	 match str  with
-	 |"A" -> readR (String.sub r 1 ((String.length r) -1)) (Alive :: l)
-	 |"D" -> readR (String.sub r 1 ((String.length r) -1)) (Dead :: l)
-	 |_ -> raise Format_non_standard
-  in match readR r [] with
-  |e::d::c::b::a::[] -> (a,b,c,d,e)
+(*Converti un caractère en state*)
+let getRule s =
+  match s with
+  |'A' -> Alive
+  |'D' -> Dead
   |_ -> raise Format_non_standard
+;;
+
+(*Converti en règle le string r*)
+let strToRule r =
+  if String.length r <> 5 then raise Format_non_standard
+  else ((getRule (String.get r 0)),
+	(getRule (String.get r 1)),
+	(getRule (String.get r 2)),
+	(getRule (String.get r 3)),
+	(getRule (String.get r 4)))
 ;;
 
 (*Lit les règles du fichier*)
@@ -68,7 +72,7 @@ let readRulesAndGen f n =
 	End_of_file -> None
     in match line with
     |Some(x) -> if x = "GenerationZero" then (n, l,(readGeneration f n))
-      else aux f ((listRule x) :: l)
+      else aux f ((strToRule x) :: l)
     |None -> raise Format_non_standard
   in aux f []
 ;;
