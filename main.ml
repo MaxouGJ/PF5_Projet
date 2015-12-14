@@ -14,8 +14,9 @@ let rec tour a g =
 
 (*Permet de lancer toute la partie logique*)
 let logique a i =
-  print_string (string_of_formule (stables a i));
-  print_newline();
+  dimacs (stables a i);
+  if (Sys.command "minisat entree.dimacs sortie") = 1
+  then print_string "Echec de minisat"
 ;;
 
 let rec read_fic () =
