@@ -8,6 +8,8 @@ type formula = True
 		|Or of formula * formula
 		|Neg of formula;;
 
+exception Unsat_exception;; 
+
 (*Règles de bases*)
 let baseRules = ref [(Alive,Alive,Alive,Alive,Alive);
 		 (Alive,Alive,Alive,Dead,Alive);
@@ -76,6 +78,16 @@ function
 |Neg y -> " Neg " ^ "(" ^ (string_of_formule y) ^ ")"
 ;;
 
+let rec string_of_formula = 
+function
+|True -> "Vrai"
+|False -> "Faux"
+|Var x -> string_of_int x
+|And (x, y) -> "And(" ^ (string_of_formula x) ^ "," ^ (string_of_formula y) ^ ")"
+|Or (x, y) -> "Or(" ^ (string_of_formula x) ^ "," ^ (string_of_formula y) ^ ")"
+|Neg y -> "-" ^ (string_of_formula y)
+;;
+
 (*Retourne l'id de la case dans la position demandée*)
 let getId d i j = (d*i+j+1);;
 let getNorth d i j = if i = 0 then (d*(d-1)+j+1) else (d*(i-1)+j+1);;
@@ -83,33 +95,71 @@ let getSouth d i j = if i = (d-1) then (j+1) else (d*(i+1)+j+1);;
 let getEast d i j = if j = (d-1) then (d*i+1) else (d*i+j+1+1);;
 let getWest d i j = if j = 0 then (d*i+(d-1)+1) else (d*i+j-1+1);;
 
-(*Retourne la variable en fonction de l'état de la case*)
-let getVar (s:state) i =
+(*Retourne la négation de la variable en fonction de l'état de la case*)
+let getNegVar (s:state) i =
   match s with
-  |Alive -> Var(i)
-  |Dead -> Neg(Var(i))
+  |Alive -> Neg(Var(i))
+  |Dead -> Var(i)
 ;;
 
 (*Converti une règle en formule*)
 let stables (a:automaton) d =
   let f = ref True in
-  for i=0 to d do
-    for j=0 to d do 
+  let clauses = ref 0 in
+  for i=0 to d-1 do
+    for j=0 to d-1 do 
       let rec rules r d i j f =
 	match r with
 	|[] -> !f
 	|(n,e,s,o,c)::t ->
-	   f := And(Or(Neg(getVar n (getNorth d i j)),
-		       Or(Neg(getVar e (getEast d i j)),
-			  Or(Neg(getVar s (getSouth d i j)),
-			     Or(Neg(getVar o (getWest d i j)),
-				getVar c (getId d i j))))),!f);
+	   f := And(Or(getNegVar n (getNorth d i j),
+		       Or(getNegVar e (getEast d i j),
+			  Or(getNegVar s (getSouth d i j),
+			     Or(getNegVar o (getWest d i j),
+				getNegVar c (getId d i j))))),!f);
+	  clauses := !clauses + 1;
 	  rules t d i j f
       in f := And((rules (triBaseRules a) d i j (ref True)),!f);
     done;
   done;
-  print_string (string_of_formule (!f));
-  !f
+  (!f, d, !clauses)
 ;;
 
+let rec formula_to_dimacs f =
+  match f with
+  |True|False -> ""
+  |Var(x) -> (string_of_int x) ^ " "
+  |Neg(x) -> "-" ^ (formula_to_dimacs x)
+  |Or(x, y) -> (formula_to_dimacs x) ^ (formula_to_dimacs y)
+  |And(x, y) ->
+     begin match x with
+     |True |False -> (formula_to_dimacs y)
+     |_ -> 
+	match y with
+	|True |False -> (formula_to_dimacs x)
+	|_ -> (formula_to_dimacs x) ^ "0\n" ^ (formula_to_dimacs y)
+     end
+;;(*Ajouter un 0 à la fin de l'appel à cette méthode*)
 
+(*Converti une formule en fichier dimacs*)
+let dimacs (f, d, c) =
+  let fic = open_out "entree.dimacs" in
+  output_string fic ("p cnf " ^ (string_of_int (d*d)) ^ " " ^ (string_of_int c) ^ "\n");
+  output_string fic ((formula_to_dimacs f) ^ "0");
+  close_out fic;    
+;;
+
+(*Parse le fichier entree.dimacs*)
+let parse_dimacs () =
+  let fic = open_in "sortie" in
+  let line = 
+    try
+      Some(input_line fic)
+    with
+      End_of_file -> None
+  in match line with
+  |Some ("UNSAT") -> raise Unsat_exception
+  |Some ("SAT") -> print_string "Sat"
+  |Some (_) -> raise Format_non_standard
+  |None -> raise Format_non_standard
+;;
