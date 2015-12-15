@@ -29,22 +29,6 @@ let baseRules = ref [(Alive,Alive,Alive,Alive,Alive);
 		 (Dead,Dead,Dead,Dead,Alive)]
 ;;
 
-(*Vérifie si une règle est stable*)
-let isStabeRule (r:rule) = match r with (n, e, s, o, c) -> c = Alive;;
-
-let print_state (s:state) = if s = Alive then print_string "A" else print_string "D";;
-
-let print_rules (r:rule) =
-  match r with (a, b, c, d, e) ->
-    print_string"[";
-    print_state a;
-    print_state b;
-    print_state c;
-    print_state d;
-    print_state e;
-    print_string"]"
-;;
-
 (*Retire les règles stables de l'automate des règles de base*)
 let triBaseRules (l:automaton) =
   (*Copie de baseRules*)
@@ -67,27 +51,6 @@ let triBaseRules (l:automaton) =
 ;;
 
 (*Fonctions annexes*)
-(*Converti une formula en string*)
-let rec string_of_formule = 
-function
-|True -> "Vrai"
-|False -> "Faux"
-|Var x -> string_of_int x
-|And (x, y) -> "(" ^ (string_of_formule x) ^ " Et " ^ (string_of_formule y) ^ ")"
-|Or (x, y) -> "(" ^ (string_of_formule x) ^ " Ou " ^ (string_of_formule y) ^ ")"
-|Neg y -> " Neg " ^ "(" ^ (string_of_formule y) ^ ")"
-;;
-
-let rec string_of_formula = 
-function
-|True -> "Vrai"
-|False -> "Faux"
-|Var x -> string_of_int x
-|And (x, y) -> "And(" ^ (string_of_formula x) ^ "," ^ (string_of_formula y) ^ ")"
-|Or (x, y) -> "Or(" ^ (string_of_formula x) ^ "," ^ (string_of_formula y) ^ ")"
-|Neg y -> "-" ^ (string_of_formula y)
-;;
-
 (*Retourne l'id de la case dans la position demandée*)
 let getId d i j = (d*i+j+1);;
 let getNorth d i j = if i = 0 then (d*(d-1)+j+1) else (d*(i-1)+j+1);;
@@ -125,6 +88,7 @@ let stables (a:automaton) d =
   (!f, d, !clauses)
 ;;
 
+(*Converti une formule en string à mettre dans le fichier dimacs*)
 let rec formula_to_dimacs f =
   match f with
   |True|False -> ""
