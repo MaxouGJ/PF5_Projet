@@ -8,8 +8,6 @@ type formula = True
 		|Or of formula * formula
 		|Neg of formula;;
 
-exception Unsat_exception;; 
-
 (*Règles de bases*)
 let baseRules = ref [(Alive,Alive,Alive,Alive,Alive);
 		 (Alive,Alive,Alive,Dead,Alive);
@@ -106,24 +104,9 @@ let rec formula_to_dimacs f =
 ;;(*Ajouter un 0 à la fin de l'appel à cette méthode*)
 
 (*Converti une formule en fichier dimacs*)
-let dimacs (f, d, c) =
+let create_dimacs (f, d, c) =
   let fic = open_out "entree.dimacs" in
   output_string fic ("p cnf " ^ (string_of_int (d*d)) ^ " " ^ (string_of_int c) ^ "\n");
   output_string fic ((formula_to_dimacs f) ^ "0");
   close_out fic;    
-;;
-
-(*Parse le fichier entree.dimacs*)
-let parse_dimacs () =
-  let fic = open_in "sortie" in
-  let line = 
-    try
-      Some(input_line fic)
-    with
-      End_of_file -> None
-  in match line with
-  |Some ("UNSAT") -> raise Unsat_exception
-  |Some ("SAT") -> print_string "Sat"
-  |Some (_) -> raise Format_non_standard
-  |None -> raise Format_non_standard
 ;;
