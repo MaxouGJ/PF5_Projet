@@ -9,7 +9,9 @@ type automaton = rule list
 
 (*Exception lancée lorsque le fichier n'est pas au format standard*)
 exception Format_non_standard
-
+(*Exception lancée lorsque lefichier n'est pas trouvé*)
+exception Fichier_introuvable;;
+  
 (*Lit le fichier f au format standard, initialise un automate avec la génération spécifiée*)
 val parse :  string -> int * (state * state * state * state * state) list * state array array
 
