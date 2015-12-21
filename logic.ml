@@ -28,7 +28,7 @@ let baseRules = ref [(Alive,Alive,Alive,Alive,Alive);
 ;;
 
 (*Retire les règles stables de l'automate des règles de base*)
-let triBaseRules (l:automaton) =
+let tri_base_rules (l:automaton) =
   (*Copie de baseRules*)
   let br = ref !baseRules in
   (*Suppression des règles stables l*)
@@ -63,7 +63,7 @@ let getNegVar (s:state) i =
   |Dead -> Var(i)
 ;;
 
-(*Converti une règle en formule*)
+(*Convertit une règle en formule*)
 let stables (a:automaton) d =
   let f = ref True in
   let clauses = ref 0 in
@@ -80,13 +80,13 @@ let stables (a:automaton) d =
 				getNegVar c (getId d i j))))),!f);
 	  clauses := !clauses + 1;
 	  rules t d i j f
-      in f := And((rules (triBaseRules a) d i j (ref True)),!f);
+      in f := And((rules (tri_base_rules a) d i j (ref True)),!f);
     done;
   done;
   (!f, d, !clauses)
 ;;
 
-(*Converti une formule en string à mettre dans le fichier dimacs*)
+(*Convertit une formule en string à mettre dans le fichier dimacs*)
 let rec formula_to_dimacs f =
   match f with
   |True|False -> ""
@@ -103,7 +103,7 @@ let rec formula_to_dimacs f =
      end
 ;;(*Ajouter un 0 à la fin de l'appel à cette méthode*)
 
-(*Converti une formule en fichier dimacs*)
+(*Convertit une formule en fichier dimacs*)
 let create_dimacs (f, d, c) =
   let fic = open_out "entree.dimacs" in
   output_string fic ("p cnf " ^ (string_of_int (d*d)) ^ " " ^ (string_of_int c) ^ "\n");
