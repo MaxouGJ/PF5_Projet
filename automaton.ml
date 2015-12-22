@@ -139,9 +139,9 @@ let show_generation g =
 (*Nord, Est, Sud, Ouest, Case*)
 let line_to_rule (g:generation) i j =
   let n = (Array.length g - 1) in
-  if n = 1 then
+  if n = 0 then
     (g.(0).(0), g.(0).(0), g.(0).(0), g.(0).(0), g.(0).(0))
-  else 
+  else
     if i = 0 then
       if j = 0 then
 	(g.(n).(j), g.(i).(j+1), g.(i+1).(j), g.(i).(n), g.(i).(j))
@@ -180,7 +180,7 @@ let next_generation a g =
 	|[] -> ()
 	|h :: t -> if (line_to_rule g i j) = h then newG.(i).(j) <- Alive
 	  else check g i j t
-	in check g i j a
+      in check g i j a
     done;
   done;
   newG
